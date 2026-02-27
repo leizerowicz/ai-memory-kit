@@ -12,8 +12,8 @@ The most valuable things your AI can know aren't in your codebase. They're the c
 **Team dynamics:**
 > "Jordan (co-founder) is a peer, not a report. Keep Jordan informed; Jordan manages their own workload. Don't suggest assigning tasks to Jordan."
 
-**Vendor relationships:**
-> "We're mid-negotiation with Imran on a $14.9K invoice dispute. Our ceiling is $5K. Draft all communications to me before sending — don't finalize anything."
+**Project status:**
+> "The RFP matching pipeline is in production but p95 latency is 4s. We're mid-optimization — don't propose new features until this is resolved."
 
 **Decision frameworks:**
 > "Build vs. buy: default to buy for non-core infrastructure unless there's significant vendor lock-in risk. We're a 4-person team — operational simplicity beats optimal."
@@ -26,10 +26,10 @@ These aren't README comments. They're the working model your AI needs to handle 
 
 A README is for contributors. Memory files are for your AI — and they contain things you would never put in a README:
 
-- Active negotiation positions and settlement targets
 - Team dynamics and working style notes
 - Personal decision frameworks and context that shifts over time
 - Current status of every active project, updated after each session
+- Solutions to recurring problems and cross-repo architectural decisions
 
 A README is static documentation. Memory files are a live operating context.
 
@@ -46,6 +46,8 @@ This kit solves that with **plain markdown files** that your AI reads at the sta
 ## How It Works
 
 Your AI reads a small set of markdown files at session start to reconstruct context. At session end, it updates those files with what changed. The next session picks up exactly where you left off.
+
+> **Note on paths:** The memory directory depends on your tool. Claude Code uses `~/.claude/`. Cursor and generic setups use `~/.ai-memory/`. The setup script handles this automatically — all examples below show the generic path.
 
 ### The Three-File Pattern
 
@@ -69,7 +71,12 @@ Your AI reads a small set of markdown files at session start to reconstruct cont
 ## Quick Start
 
 ```bash
-# Clone or download this kit, then:
+curl -fsSL https://raw.githubusercontent.com/leizerowicz/ai-memory-kit/main/install.sh | bash
+```
+
+Or if you've cloned the repo:
+
+```bash
 bash setup.sh
 ```
 
@@ -113,6 +120,62 @@ Each tool has a different mechanism. See `specializations/` for your tool:
 ### 4. Initialize each repo
 
 Copy `templates/repo-state.md` to `<repo>/.ai-memory/state.md` and fill it in. Or use the `/init-memory` command if your tool supports custom commands (see specialization).
+
+---
+
+## What Your Memory Files Look Like
+
+Here are examples of the kinds of content that belong in memory files. These are the entries that make the difference between an AI that re-asks the same questions every session and one that picks up exactly where you left off.
+
+**Working style and technical preferences** (`~/.ai-memory/memory/technical-patterns.md`):
+
+```markdown
+## Working Style
+- Commit messages: imperative mood, explain why not what
+- Never touch production before local repro
+- Default to TypeScript strict mode
+- Build vs. buy: default buy for non-core infrastructure unless vendor lock-in risk
+- When in doubt, prefer the boring solution over the clever one
+```
+
+**Team context** (`~/.ai-memory/memory/team-context.md`):
+
+```markdown
+## Team Context
+- Design Lead: prefers async feedback via Figma, not Slack. Needs 24h heads-up for scope changes.
+- Co-founder: peer, not a report. Keep informed; they manage their own workload.
+- Support team: PST-based. Async decisions logged in Notion, not Slack.
+```
+
+**Active projects** (in `~/.ai-memory/global.md`):
+
+```markdown
+## Active Projects
+| Project | Status | Next |
+|---------|--------|------|
+| RFP matching | p95 latency 4s — optimization in progress | Deploy city pre-filter |
+| Analytics migration | Gold tables live, consumer migration pending | Phase 1: 4 query functions |
+| Auth refactor | On hold | Unblock after latency work |
+```
+
+**Per-repo state** (`<repo>/.ai-memory/state.md`):
+
+```markdown
+## Branch
+feat/city-prefilter
+
+## Status
+In progress — prefilter logic written, integration tests failing on edge case with null city field.
+
+## Next
+Fix null handling in `buildCityFilter()`, then re-run full suite.
+
+## Gotchas
+- The staging DB has stale fixture data — run `scripts/refresh-fixtures.sh` before testing.
+- `latency-test.ts` must be run with `--runInBand` or results are unreliable.
+```
+
+These files are plain markdown. You own them, you can read them, and they travel with you across tools.
 
 ---
 

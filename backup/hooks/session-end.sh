@@ -3,6 +3,8 @@
 # Runs at session end. Syncs ~/.claude/ memory files to backup repo and pushes.
 # Silently no-ops if backup isn't configured or nothing changed.
 
+set -euo pipefail
+
 MEMORY_DIR="$HOME/.claude"
 BACKUP_DIR_FILE="$MEMORY_DIR/.backup-dir"
 
@@ -22,7 +24,7 @@ if [ -d "$MEMORY_DIR/memory" ]; then
 fi
 
 # Commit and push if anything changed
-cd "$BACKUP_DIR"
+cd "$BACKUP_DIR" || { echo "ERROR: cannot cd to backup dir $BACKUP_DIR"; exit 1; }
 git add -A
 if git diff --cached --quiet; then
     exit 0  # Nothing changed — skip silently

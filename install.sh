@@ -22,10 +22,18 @@ curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" \
 # Run setup
 bash "$KIT_DIR/setup.sh" --tool claude-code
 
-# Cleanup
+# Keep the kit locally so backup/setup.sh and future updates are available
+KIT_DEST="$HOME/.claude/memory-kit"
+rm -rf "$KIT_DEST"
+cp -r "$KIT_DIR" "$KIT_DEST"
+
+# Cleanup temp
 rm -rf "$TMP_DIR"
 
 echo ""
 echo "Installation complete."
-echo "Run /init-memory in any Claude Code session to initialize a repo."
+echo "Kit installed to: $KIT_DEST"
+echo ""
+echo "Next: run /init-memory in any Claude Code session to initialize a repo."
+echo "To set up backup, tell Claude: 'Set up backup using <your-private-repo-url>'"
 echo ""

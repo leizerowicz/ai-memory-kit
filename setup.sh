@@ -162,7 +162,15 @@ fi
 header "Global state file"
 
 if [ ! -f "$GLOBAL_STATE" ]; then
-    run cp "$SCRIPT_DIR/templates/global.md" "$GLOBAL_STATE"
+    if [ "$TOOL" = "claude-code" ]; then
+        if [ "$DRY_RUN" = false ]; then
+            sed 's|~/.ai-memory/|~/.claude/|g' "$SCRIPT_DIR/templates/global.md" > "$GLOBAL_STATE"
+        else
+            info "[dry-run] Would sed 's|~/.ai-memory/|~/.claude/|g' templates/global.md > $GLOBAL_STATE"
+        fi
+    else
+        run cp "$SCRIPT_DIR/templates/global.md" "$GLOBAL_STATE"
+    fi
     log "Created $GLOBAL_STATE"
     warn "Edit $GLOBAL_STATE to add your name, preferences, and projects"
 else

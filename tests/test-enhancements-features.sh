@@ -300,6 +300,22 @@ else
     fail "setup.sh --update did not show 'Update mode' message"
 fi
 
+# ── Test 4: doctor.sh runs all checks even when multiple fail ─────────────────
+
+echo ""
+echo "Issue #12: doctor.sh runs all checks even when multiple fail"
+BROKEN_HOME="$(mktemp -d)"
+# Run doctor against a home dir with nothing installed
+OUTPUT=$(HOME="$BROKEN_HOME" bash "$SCRIPT_DIR/../doctor.sh" 2>&1 || true)
+# Should contain the summary line (proves it ran to completion)
+if echo "$OUTPUT" | grep -q "issue(s) found"; then
+    pass "doctor.sh runs to completion despite failures"
+else
+    fail "doctor.sh runs to completion despite failures"
+    echo "  Output: $OUTPUT"
+fi
+rm -rf "$BROKEN_HOME"
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 
 echo ""

@@ -24,7 +24,7 @@ check_hook_registered() {
     if [ ! -f "$SETTINGS" ]; then
         err "settings.json not found — hook is not registered"
         info "Run: bash setup.sh --tool claude-code"
-        ((ISSUES++))
+        ISSUES=$((ISSUES + 1))
         return
     fi
     if grep -q "check-global-state" "$SETTINGS" 2>/dev/null; then
@@ -32,14 +32,14 @@ check_hook_registered() {
     else
         err "Hook not registered in settings.json"
         info "Re-run setup.sh to merge the hook"
-        ((ISSUES++))
+        ISSUES=$((ISSUES + 1))
     fi
 
     if [ -f "$HOME/.claude/hooks/check-global-state.sh" ]; then
         ok "check-global-state.sh exists"
     else
         err "check-global-state.sh not found at ~/.claude/hooks/"
-        ((ISSUES++))
+        ISSUES=$((ISSUES + 1))
     fi
 }
 
@@ -50,7 +50,7 @@ check_global_state() {
     if [ ! -f "$GLOBAL" ]; then
         err "global-state.md not found at $GLOBAL"
         info "Run: bash setup.sh --tool claude-code"
-        ((ISSUES++))
+        ISSUES=$((ISSUES + 1))
         return
     fi
     ok "global-state.md exists"
@@ -83,7 +83,7 @@ check_backup() {
     if [ -f "$LAST_ERROR" ]; then
         warn "Backup: last push FAILED"
         info "$(cat "$LAST_ERROR")"
-        ((ISSUES++))
+        ISSUES=$((ISSUES + 1))
     elif [ -f "$LAST_PUSH" ]; then
         local PUSH_TIME
         PUSH_TIME=$(cat "$LAST_PUSH")

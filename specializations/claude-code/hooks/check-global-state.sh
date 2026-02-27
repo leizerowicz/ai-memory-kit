@@ -10,7 +10,9 @@
 set -euo pipefail
 
 GLOBAL_STATE="$HOME/.claude/global-state.md"
-REPO_STATE=".claude/state.md"
+# Try team-state.md first (new split convention), fall back to state.md
+REPO_STATE=".claude/team-state.md"
+[ -f "$REPO_STATE" ] || REPO_STATE=".claude/state.md"
 
 # Extract "Last updated: YYYY-MM-DD" from a file
 get_date() {
@@ -25,7 +27,8 @@ if [ -f "$REPO_STATE" ]; then
     if [ -n "$REPO_DATE" ] && [ -n "$GLOBAL_DATE" ]; then
         if [[ "$REPO_DATE" > "$GLOBAL_DATE" ]]; then
             REPO_NAME=$(basename "$(git -C . rev-parse --show-toplevel 2>/dev/null || pwd)")
-            echo "⚠️  STALE GLOBAL STATE: ${REPO_NAME}/.claude/state.md was updated ${REPO_DATE} but ~/.claude/global-state.md was last updated ${GLOBAL_DATE}."
+            STATE_FILE=$(basename "$REPO_STATE")
+            echo "⚠️  STALE GLOBAL STATE: ${REPO_NAME}/.claude/${STATE_FILE} was updated ${REPO_DATE} but ~/.claude/global-state.md was last updated ${GLOBAL_DATE}."
             echo "ACTION REQUIRED: Update the Active Projects row for '${REPO_NAME}' in ~/.claude/global-state.md before proceeding."
         fi
     fi
@@ -47,10 +50,11 @@ if [ -n "$GLOBAL_DATE" ]; then
             FILE_DATE=$(get_date "$state_file")
             if [ -n "$FILE_DATE" ] && [[ "$FILE_DATE" > "$GLOBAL_DATE" ]]; then
                 rel="${state_file#$HOME/}"
-                repo_name="${rel%/.claude/state.md}"
+                repo_name="${rel%/.claude/team-state.md}"
+                repo_name="${repo_name%/.claude/state.md}"
                 STALE_REPOS+=("$repo_name ($FILE_DATE)")
             fi
-        done < <(find "$root" -path '*/.claude/state.md' -not -path '*/node_modules/*' 2>/dev/null)
+        done < <(find "$root" \( -path '*/.claude/state.md' -o -path '*/.claude/team-state.md' \) -not -path '*/node_modules/*' 2>/dev/null)
     done
 
     if [ ${#STALE_REPOS[@]} -gt 0 ]; then

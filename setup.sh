@@ -8,6 +8,8 @@
 #   bash setup.sh --tool claude-code # Non-interactive
 #   bash setup.sh --tool cursor
 #   bash setup.sh --tool generic
+#   bash setup.sh --dry-run          # Preview changes without modifying files
+#   bash setup.sh --help             # Show this help
 
 set -euo pipefail
 
@@ -17,12 +19,30 @@ DRY_RUN=false
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 
-for arg in "$@"; do
-    case $arg in
-        --tool=*) TOOL="${arg#*=}" ;;
-        --tool)   shift; TOOL="$1" ;;
-        --dry-run) DRY_RUN=true ;;
-        *) ;;
+usage() {
+    cat <<USAGE
+Usage: bash setup.sh [OPTIONS]
+
+Options:
+  --tool=TOOL     Specify tool without prompt (claude-code, cursor, generic)
+  --tool TOOL     Same as above (space-separated form)
+  --dry-run       Preview what would be installed without modifying files
+  --help          Show this help message
+
+Examples:
+  bash setup.sh
+  bash setup.sh --tool claude-code
+  bash setup.sh --tool=cursor --dry-run
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --tool=*) TOOL="${1#--tool=}"; shift ;;
+        --tool)   TOOL="$2"; shift 2 ;;
+        --dry-run) DRY_RUN=true; shift ;;
+        --help) usage; exit 0 ;;
+        *) shift ;;
     esac
 done
 

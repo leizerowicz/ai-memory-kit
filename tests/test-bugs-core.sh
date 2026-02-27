@@ -40,23 +40,31 @@ assert_contains "--tool=value form works" "claude-code" "$OUT"
 OUT=$(bash "$SCRIPT_DIR/setup.sh" --tool claude-code --dry-run 2>&1 || true)
 assert_contains "--tool value form works" "claude-code" "$OUT"
 
-# Test #1: templates/global.md doesn't have ~/.claude/ hardcoded (template should use ~/.ai-memory/)
+# Behavioral test — capture output and verify no interactive prompt
 echo ""
-echo "Issue #1: template paths"
-TEMPLATE="$SCRIPT_DIR/templates/global.md"
-# Template should use ~/.ai-memory/ (generic), NOT ~/.claude/ (tool-specific)
-if grep -qF "~/.claude/" "$TEMPLATE" 2>/dev/null; then
-  CLAUDE_COUNT=$(grep -cF "~/.claude/" "$TEMPLATE")
-else
-  CLAUDE_COUNT="0"
-fi
-assert_eq "template uses generic paths (no ~/.claude/ hardcoded)" "0" "$CLAUDE_COUNT"
+echo "Issue #5: --tool space form behavioral"
+OUT=$(echo "" | bash "$SCRIPT_DIR/setup.sh" --tool claude-code --dry-run 2>&1 || true)
+assert_contains "--tool space form outputs claude-code (not prompt)" "claude-code" "$OUT"
 
-# Test #2: setup.sh has Python merge logic for settings.json
+# Test #1: sed substitution eliminates all .ai-memory references
+echo ""
+echo "Issue #1: sed substitution coverage"
+TEMPLATE="$SCRIPT_DIR/templates/global.md"
+RESULT=$(sed \
+    -e 's|~/.ai-memory/|~/.claude/|g' \
+    -e 's|\.ai-memory/state\.md|.claude/state.md|g' \
+    "$TEMPLATE")
+REMAINING=$(echo "$RESULT" | grep -c "ai-memory" 2>/dev/null || true)
+REMAINING="${REMAINING:-0}"
+assert_eq "no .ai-memory references remain after sed" "0" "$REMAINING"
+
+# Test #2: setup.sh has Python merge logic for settings.json with error handling
 echo ""
 echo "Issue #2: settings.json merge"
 assert_contains "setup.sh has python3 merge" "python3" "$(cat "$SCRIPT_DIR/setup.sh")"
 assert_contains "setup.sh has setdefault" "setdefault" "$(cat "$SCRIPT_DIR/setup.sh")"
+assert_contains "setup.sh has atomic temp file write" "TMP_SETTINGS" "$(cat "$SCRIPT_DIR/setup.sh")"
+assert_contains "setup.sh has fallback warn on failure" "Could not auto-merge" "$(cat "$SCRIPT_DIR/setup.sh")"
 
 # Summary
 echo ""

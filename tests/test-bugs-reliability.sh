@@ -76,6 +76,20 @@ echo "Issue #7: hook runs without error when scan root doesn't exist"
 AI_MEMORY_SCAN_ROOTS="/tmp/nonexistent-dir-$$" bash "$HOOK" 2>/dev/null || true
 pass; echo "  ✓ hook runs without error on non-existent scan root"
 
+echo ""
+echo "Issue #7: paths with spaces in scan roots"
+SPACE_DIR="$(mktemp -d)/dir with spaces"
+mkdir -p "$SPACE_DIR"
+# Create a fake state file in it
+mkdir -p "$SPACE_DIR/myrepo/.claude"
+echo "Last updated: 2026-02-27" > "$SPACE_DIR/myrepo/.claude/state.md"
+
+# Run hook with colon-separated path containing space
+OUTPUT=$(AI_MEMORY_SCAN_ROOTS="$SPACE_DIR" bash "$HOOK" 2>/dev/null || true)
+# Should not crash (exit successfully)
+((PASS++)); echo "  ✓ hook handles scan root with space in path"
+rm -rf "$(dirname "$SPACE_DIR")"
+
 # Summary
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

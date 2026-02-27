@@ -32,16 +32,16 @@ if [ -f "$REPO_STATE" ]; then
 fi
 
 # --- Scan all repos for broader staleness ---
-# Scan roots: space-separated list of directories to search for repo state files.
-# Override by setting AI_MEMORY_SCAN_ROOTS in your environment.
-# Default: $HOME/repos $HOME/code $HOME/dev $HOME/projects
-SCAN_ROOTS="${AI_MEMORY_SCAN_ROOTS:-$HOME/repos $HOME/code $HOME/dev $HOME/projects}"
+# Scan roots: colon-separated list of directories to search for repo state files.
+# Override by setting AI_MEMORY_SCAN_ROOTS in your environment (colon-separated).
+# Default: $HOME/repos:$HOME/code:$HOME/dev:$HOME/projects
+IFS=: read -ra SCAN_ROOT_ARRAY <<< "${AI_MEMORY_SCAN_ROOTS:-$HOME/repos:$HOME/code:$HOME/dev:$HOME/projects}"
 
 STALE_REPOS=()
 GLOBAL_DATE=$(get_date "$GLOBAL_STATE")
 
 if [ -n "$GLOBAL_DATE" ]; then
-    for root in $SCAN_ROOTS; do
+    for root in "${SCAN_ROOT_ARRAY[@]}"; do
         [ -d "$root" ] || continue
         while IFS= read -r state_file; do
             FILE_DATE=$(get_date "$state_file")

@@ -36,6 +36,10 @@ if ! command -v git &>/dev/null; then
     err "git is required but not installed."
 fi
 
+if ! command -v rsync &>/dev/null; then
+    err "rsync is required but not installed. On macOS: brew install rsync"
+fi
+
 # ── Clone or init backup repo ─────────────────────────────────────────────────
 
 echo ""
@@ -63,12 +67,14 @@ fi
 echo "Syncing memory files to backup repo..."
 
 # Files to back up: global index, admin state, and the entire memory/ directory
-rsync -a --mkpath \
+mkdir -p "$BACKUP_DIR"
+rsync -a \
     "$MEMORY_DIR/global-state.md" \
     "$MEMORY_DIR/state.md" \
     "$BACKUP_DIR/" 2>/dev/null || true
 
 if [ -d "$MEMORY_DIR/memory" ]; then
+    mkdir -p "$BACKUP_DIR/memory"
     rsync -a "$MEMORY_DIR/memory/" "$BACKUP_DIR/memory/" 2>/dev/null || true
 fi
 

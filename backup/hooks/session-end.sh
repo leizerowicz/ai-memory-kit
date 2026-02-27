@@ -31,4 +31,12 @@ if git diff --cached --quiet; then
 fi
 
 git commit -m "auto: $(date '+%Y-%m-%d %H:%M')" --quiet
-git push --quiet 2>/dev/null || true  # Don't fail session if push fails
+
+# Push
+if git push origin "${BRANCH:-main}" --quiet 2>&1; then
+    echo "$(date '+%Y-%m-%d %H:%M')" > "$HOME/.claude/.backup-last-push"
+else
+    echo "$(date '+%Y-%m-%d %H:%M') — git push failed. Check remote auth and network." > "$HOME/.claude/.backup-last-error"
+    echo "Warning: Backup push failed. Details: $HOME/.claude/.backup-last-error"
+    exit 1
+fi

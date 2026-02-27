@@ -13,6 +13,13 @@ BACKUP_DIR="$(cat "$BACKUP_DIR_FILE")"
 [ -d "$BACKUP_DIR/.git" ] || exit 0
 command -v git &>/dev/null || exit 0
 
+# Warn if last push failed
+LAST_ERROR="$HOME/.claude/.backup-last-error"
+if [ -f "$LAST_ERROR" ]; then
+    echo "Warning: Backup: last push FAILED at $(cat "$LAST_ERROR")"
+    echo "  Fix and re-run: cd ~/.claude-backup && git push"
+fi
+
 # Pull latest (silently — don't block session start)
 git -C "$BACKUP_DIR" pull --quiet --ff-only 2>/dev/null || true
 

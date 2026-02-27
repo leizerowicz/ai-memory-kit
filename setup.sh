@@ -17,6 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOL=""
 DRY_RUN=false
 REPO_DIR=""
+UPDATE=false
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             REPO_DIR="$(cd "$2" 2>/dev/null && pwd || echo "")"; shift 2 ;;
+        --update) UPDATE=true; shift ;;
         --dry-run) DRY_RUN=true; shift ;;
         --help) usage; exit 0 ;;
         *) shift ;;
@@ -134,6 +136,7 @@ fi
 echo ""
 echo "Installing AI Memory Kit for: $TOOL"
 [ "$DRY_RUN" = true ] && warn "Dry-run mode — no files will be modified"
+[ "$UPDATE" = true ] && warn "Update mode: overwriting hook scripts and commands (memory files untouched)"
 
 # ── Tool-specific config ───────────────────────────────────────────────────────
 
@@ -224,7 +227,7 @@ case "$TOOL" in
 
         # Hook script
         HOOK_DEST="$HOME/.claude/hooks/check-global-state.sh"
-        if [ ! -f "$HOOK_DEST" ]; then
+        if [ ! -f "$HOOK_DEST" ] || [ "$UPDATE" = true ]; then
             run cp "$SPEC_DIR/hooks/check-global-state.sh" "$HOOK_DEST"
             run chmod +x "$HOOK_DEST"
             log "Installed hook: $HOOK_DEST"
@@ -234,11 +237,31 @@ case "$TOOL" in
 
         # init-memory command
         CMD_DEST="$HOME/.claude/commands/init-memory.md"
-        if [ ! -f "$CMD_DEST" ]; then
+        if [ ! -f "$CMD_DEST" ] || [ "$UPDATE" = true ]; then
             run cp "$SPEC_DIR/commands/init-memory.md" "$CMD_DEST"
             log "Installed command: /init-memory"
         else
             info "/init-memory command already exists — skipped"
+        fi
+
+        # doctor command
+        DOCTOR_CMD_DEST="$HOME/.claude/commands/doctor.md"
+        if [ ! -f "$DOCTOR_CMD_DEST" ] || [ "$UPDATE" = true ]; then
+            run cp "$SPEC_DIR/commands/doctor.md" "$DOCTOR_CMD_DEST"
+            log "Installed command: /doctor"
+        else
+            info "/doctor command already exists — skipped"
+        fi
+
+        # doctor.sh script
+        run mkdir -p "$HOME/.claude/memory-kit"
+        DOCTOR_DEST="$HOME/.claude/memory-kit/doctor.sh"
+        if [ ! -f "$DOCTOR_DEST" ] || [ "$UPDATE" = true ]; then
+            run cp "$SCRIPT_DIR/doctor.sh" "$DOCTOR_DEST"
+            run chmod +x "$DOCTOR_DEST"
+            log "Installed doctor script: $DOCTOR_DEST"
+        else
+            info "doctor.sh already exists: $DOCTOR_DEST — skipped"
         fi
 
         # settings.json — merge hook, don't overwrite

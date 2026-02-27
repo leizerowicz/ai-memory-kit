@@ -143,6 +143,85 @@ All templates are in `templates/`. See them for copy-paste-ready starting points
 
 ---
 
+## What This Looks Like in Practice
+
+Most people start by storing project status and technical notes. That's useful. But the real leverage comes from recording the **human context** your AI would otherwise need to rediscover every session — team dynamics, communication preferences, thought processes, and relationship history.
+
+Here are concrete examples of entries that make sessions dramatically better:
+
+### Working style and communication preferences
+
+```markdown
+## Preferences
+- Draft all external comms to me first. Explicitly flag what to leave *out* — not just what to include.
+- When I ask for "a quick blurb" I mean 2-4 sentences, no bullet points.
+- Direct tone, no filler. Skip "Great question!" and similar.
+- I review important comms with my co-founder before sending — don't suggest sending without that step.
+```
+
+This kind of entry means the AI never writes a draft in the wrong voice, never sends without the right review step, and never pads responses with pleasantries you don't want.
+
+### Team relationships and dynamics
+
+```markdown
+## Team Context
+- Sarah (Design Lead): prefers async feedback via Figma comments, not Slack. Needs 24h heads-up
+  before scope changes. Territorial about timeline — frame new work as "additions," not "replacements."
+- Jake (QA): meticulous and thorough. Frame test coverage suggestions as additions, not critiques.
+- Jordan (co-founder, Product): peer, not a report. Keep informed when working on shared areas;
+  Jordan manages their own workload. Decisions made async in Notion — don't wait for live sync.
+- Engineering team: mostly PST. Decisions happen async; Slack for FYIs, Notion for decisions.
+```
+
+Without this, the AI treats every colleague the same way. With it, drafts land correctly the first time.
+
+### Vendor and stakeholder context
+
+```markdown
+## Vendors & External Relationships
+- Acme Consulting (contractor): rate dispute Aug–Jan, $14K claimed vs $8K expected. Call 1 done.
+  Target settlement: $5K max. Never escalate over email — frame in writing, negotiate specifics live.
+  Hold any leverage in reserve until needed.
+- Mariya (fractional CFO, Founders First): BOD-facing, data-before-opinions, no jargon.
+  Deliverables go to her SOB Monday. She synthesizes for the board.
+```
+
+This means the AI remembers the negotiation history, knows the stakes, and matches the right tone automatically — without you re-explaining the situation every session.
+
+### Decision frameworks and thought processes
+
+```markdown
+## Decision Frameworks
+- Pricing/packaging changes: always segment paid vs. free users before drawing conclusions.
+  Aggregate metrics mix revenue-generating and non-revenue cohorts and hide what's actually happening.
+- Build vs. buy: default to buy for non-core infra (auth, payments, email). Build only when
+  the vendor can't support our scale or creates lock-in risk.
+- When debugging: reproduce first, hypothesize second. Don't touch production before local repro.
+```
+
+These entries make the AI think about problems the way you do — not just execute tasks, but apply your actual judgment.
+
+### Cross-repo patterns and gotchas
+
+```markdown
+## Cross-Repo Patterns
+- NuGet restore always fails on first run in CI — it's a known flake. Retry once before investigating.
+- All services use Azure Managed Identity for SQL access. Never hardcode connection strings.
+- The monorepo `main` branch is protected. All changes go through PRs even for hotfixes.
+```
+
+This is the classic use case — but the examples above show it's only one layer of what's possible.
+
+---
+
+### The compounding effect
+
+The value isn't any single entry. It's that over time, your AI accumulates enough context to feel like it actually knows your project, your team, and your working style. Sessions start at depth instead of from zero. The AI catches things it shouldn't say to the wrong person, applies your actual decision frameworks, and handles relationship context the way you would.
+
+**You're not just giving it a to-do list. You're giving it a working model of your world.**
+
+---
+
 ## Journal Format
 
 The journal is a daily append-only log. Each entry follows this structure:

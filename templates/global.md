@@ -3,10 +3,37 @@
 Last updated: YYYY-MM-DD
 
 ## Preferences
-- [Working style preferences — e.g. "direct communication, no filler"]
-- [Tool preferences — e.g. "always use TypeScript strict mode"]
+
+### Working style
+- [Communication tone — e.g. "direct, no filler, skip pleasantries"]
+- [Draft preference — e.g. "draft all external comms to me first; flag what to leave OUT"]
+- [Review step — e.g. "I review important comms with [name] before sending — always include that step"]
+
+### Technical preferences
+- [Tool/language defaults — e.g. "always TypeScript strict mode"]
 - [Commit style — e.g. "imperative mood, explain why not what"]
-- [Review preference — e.g. "draft comms to me first before sending externally"]
+- [Build/deploy habits — e.g. "never touch production before local repro"]
+
+### Team context
+<!--
+This section is where the real leverage lives. Record relationship dynamics so the AI
+handles people correctly without being re-briefed every session. Examples:
+
+- "Sarah (Design): prefers async feedback via Figma, not Slack. 24h heads-up for scope changes."
+- "Jordan (co-founder): peer, not a report. Keep informed; Jordan manages their own workload."
+- "Engineering team: mostly PST, decisions async in Notion."
+-->
+- [Name (role): key dynamic, communication preference, anything the AI should know]
+
+### Decision frameworks
+<!--
+Record how you actually think about recurring decision types. Examples:
+
+- "Pricing questions: always segment paid vs. free before drawing conclusions."
+- "Build vs. buy: default buy for non-core infra unless vendor creates lock-in risk."
+- "Vendor disputes: frame in writing first, negotiate specifics live."
+-->
+- [Decision type: your default approach or framework]
 
 ## Active Projects
 

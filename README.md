@@ -116,7 +116,38 @@ Copy `templates/repo-state.md` to `<repo>/.ai-memory/state.md` and fill it in. O
 
 ---
 
-## What to Store
+## What to Store — and What Not To
+
+Not everything belongs in AI-readable memory files. These files are transmitted to cloud AI provider APIs on every session. Here's a practical guide:
+
+### Tier 1 — Safe to include in any AI session
+- Project status and next steps
+- Technical patterns, gotchas, and architectural decisions
+- Workflow preferences and tool conventions
+- Team communication preferences (using roles, not names where possible)
+
+### Tier 2 — Handle with care
+- Named individuals with working style notes — keep factual, avoid psychological characterizations. Use roles ("Design Lead") rather than names when possible.
+- Vendor or client context — include enough to be useful, but not dispute positions or settlement targets
+- Anything you'd be comfortable sharing in a work setting
+
+### Tier 3 — Do not store in AI-readable files
+- Active legal dispute positions and settlement targets
+- Salary, compensation, or financial negotiation strategy
+- Named individual characterizations you'd be uncomfortable seeing quoted externally
+- Medical or personal information about anyone
+
+> **Guiding principle:** If you would be uncomfortable having this content quoted back in an employment discussion, a legal proceeding, or a vendor negotiation, it should not be in a file transmitted to a cloud AI API.
+
+**A practical middle ground:** Pseudonymize sensitive context. "Design Lead prefers async feedback" is useful and carries no personal data risk. "Sarah thinks the PM is incompetent and threatened to quit" should stay in your head.
+
+### A note on GDPR
+
+European users storing personal data about named third parties (employees, contractors, clients) in files transmitted to a cloud API likely constitute data processing under GDPR Article 4. If this applies to you, treat AI memory files as you would any other data processor relationship — store only what's necessary, and consider pseudonymization.
+
+---
+
+## What to Store — Examples
 
 **Good memory file candidates:**
 - Decisions that span multiple repos or sessions
@@ -129,6 +160,7 @@ Copy `templates/repo-state.md` to `<repo>/.ai-memory/state.md` and fill it in. O
 - Things already in the codebase (code is the source of truth)
 - Single-session temporary state
 - Anything that duplicates what's in a project README or CLAUDE.md
+- Sensitive negotiation positions or personal information (see tiers above)
 
 ---
 

@@ -27,7 +27,7 @@ The install script will:
 - Install `/init-memory` as a Claude Code slash command
 - Register the hook in `~/.claude/settings.json`
 
-After the paste, Claude will walk you through filling in your preferences. From then on, every session in every repo will start with full context of where you left off.
+After the paste, Claude will walk you through filling in your preferences. From then on, every session in every repo will start with full context of where you left off. You don't need to do anything special — just open Claude Code and start working. Claude reads the state files automatically.
 
 ## Per-repo initialization
 

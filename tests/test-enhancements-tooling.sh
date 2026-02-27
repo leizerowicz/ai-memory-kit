@@ -148,6 +148,16 @@ assert_file_contains "$SESSION_START" ".backup-last-error" \
 assert_file_contains "$SESSION_START" "last push FAILED" \
     "session-start.sh warns when last push failed"
 
+# Issue #15: error sentinel cleared on push success
+assert_file_contains "$SESSION_END" "rm -f" \
+    "session-end clears .backup-last-error on success"
+
+if grep -rq 'rm -f.*backup-last-error\|backup-last-error.*rm -f' "$SESSION_END" 2>/dev/null; then
+    pass "session-end uses rm -f to clear .backup-last-error"
+else
+    fail "session-end does not rm -f .backup-last-error (sentinel not cleared on success)"
+fi
+
 echo ""
 
 # ── Enhancement #16: Versioned Installer ─────────────────────────────────────

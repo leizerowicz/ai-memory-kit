@@ -26,7 +26,16 @@ else
     ARCHIVE_NAME="ai-memory-kit-${VERSION#v}"
 fi
 
-curl -fsSL "$DOWNLOAD_URL" | tar -xz -C "$TMP_DIR"
+ARCHIVE="$TMP_DIR/kit.tar.gz"
+if ! curl -fsSL "$DOWNLOAD_URL" -o "$ARCHIVE"; then
+    echo ""
+    echo "Error: download failed."
+    if [ "$VERSION" != "main" ]; then
+        echo "Check that version '$VERSION' exists: https://github.com/$REPO/releases"
+    fi
+    exit 1
+fi
+tar -xz -C "$TMP_DIR" -f "$ARCHIVE"
 KIT_DIR="$TMP_DIR/$ARCHIVE_NAME"
 
 # Verify the kit downloaded correctly

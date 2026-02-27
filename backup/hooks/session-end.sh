@@ -33,10 +33,12 @@ fi
 git commit -m "auto: $(date '+%Y-%m-%d %H:%M')" --quiet
 
 # Push
-if git push origin "${BRANCH:-main}" --quiet 2>&1; then
+GIT_ERROR=$(git push origin "${BRANCH:-main}" --quiet 2>&1) && {
     echo "$(date '+%Y-%m-%d %H:%M')" > "$HOME/.claude/.backup-last-push"
-else
-    echo "$(date '+%Y-%m-%d %H:%M') — git push failed. Check remote auth and network." > "$HOME/.claude/.backup-last-error"
+    rm -f "$HOME/.claude/.backup-last-error"
+} || {
+    ERROR_MSG="$(date '+%Y-%m-%d %H:%M') — git push failed: $GIT_ERROR"
+    echo "$ERROR_MSG" > "$HOME/.claude/.backup-last-error"
     echo "Warning: Backup push failed. Details: $HOME/.claude/.backup-last-error"
     exit 1
-fi
+}

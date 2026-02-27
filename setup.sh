@@ -221,17 +221,35 @@ case "$TOOL" in
             info "/init-memory command already exists — skipped"
         fi
 
-        # settings.json — merge, don't overwrite
+        # settings.json — merge hook, don't overwrite
         SETTINGS="$HOME/.claude/settings.json"
+        HOOK_CMD="bash ~/.claude/hooks/check-global-state.sh"
+
         if [ ! -f "$SETTINGS" ]; then
             run cp "$SPEC_DIR/settings.json" "$SETTINGS"
             log "Created $SETTINGS with hook registration"
         else
             if ! grep -q "check-global-state" "$SETTINGS" 2>/dev/null; then
-                warn "settings.json already exists but doesn't have the hook."
-                warn "Manually add the SessionStart hook from:"
-                info "  $SPEC_DIR/settings.json"
-                info "  → into $SETTINGS"
+                # Merge hook into existing settings.json using Python
+                if [ "$DRY_RUN" = false ]; then
+                    python3 - "$SETTINGS" "$HOOK_CMD" <<'PYEOF'
+import json, sys
+settings_path, hook_cmd = sys.argv[1], sys.argv[2]
+with open(settings_path) as f:
+    settings = json.load(f)
+hooks = settings.setdefault("hooks", {})
+session_start = hooks.setdefault("SessionStart", [])
+hook_entry = {"type": "command", "command": hook_cmd}
+if not any(h.get("command") == hook_cmd for h in session_start):
+    session_start.append(hook_entry)
+with open(settings_path, "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+PYEOF
+                    log "Merged SessionStart hook into existing $SETTINGS"
+                else
+                    info "[dry-run] Would merge hook into $SETTINGS"
+                fi
             else
                 info "Hook already registered in settings.json — skipped"
             fi

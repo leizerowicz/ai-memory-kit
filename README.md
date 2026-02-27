@@ -5,6 +5,36 @@
 
 ---
 
+## Give Your AI a Working Model of Your World
+
+The most valuable things your AI can know aren't in your codebase. They're the context that takes minutes to re-explain every session:
+
+**Team dynamics:**
+> "Jordan (co-founder) is a peer, not a report. Keep Jordan informed; Jordan manages their own workload. Don't suggest assigning tasks to Jordan."
+
+**Vendor relationships:**
+> "We're mid-negotiation with Imran on a $14.9K invoice dispute. Our ceiling is $5K. Draft all communications to me before sending — don't finalize anything."
+
+**Decision frameworks:**
+> "Build vs. buy: default to buy for non-core infrastructure unless there's significant vendor lock-in risk. We're a 4-person team — operational simplicity beats optimal."
+
+These aren't README comments. They're the working model your AI needs to handle your real work — saved once, loaded every session.
+
+---
+
+## Why Not Just Write a Good README?
+
+A README is for contributors. Memory files are for your AI — and they contain things you would never put in a README:
+
+- Active negotiation positions and settlement targets
+- Team dynamics and working style notes
+- Personal decision frameworks and context that shifts over time
+- Current status of every active project, updated after each session
+
+A README is static documentation. Memory files are a live operating context.
+
+---
+
 ## The Problem
 
 AI coding assistants have no memory between sessions. Every conversation starts from zero. You re-explain the project, re-establish conventions, re-describe where you left off. The AI re-discovers things it already learned last time.
@@ -86,6 +116,57 @@ Copy `templates/repo-state.md` to `<repo>/.ai-memory/state.md` and fill it in. O
 
 ---
 
+## What to Store
+
+**Good memory file candidates:**
+- Decisions that span multiple repos or sessions
+- Architectural patterns your team has settled on
+- Solutions to recurring problems
+- Cross-repo conventions
+- Team communication preferences and working style notes
+
+**Don't store:**
+- Things already in the codebase (code is the source of truth)
+- Single-session temporary state
+- Anything that duplicates what's in a project README or CLAUDE.md
+
+---
+
+## Tool-Specific Setup
+
+### Claude Code
+
+See `specializations/claude-code/README.md` for:
+- Adding the session protocol to `CLAUDE.md`
+- Registering the `/init-memory` command
+- Session start/end hooks
+
+### Cursor
+
+See `specializations/cursor/README.md` for:
+- Adding the protocol to `.cursorrules`
+- Cursor-compatible memory file paths
+- Session management without hooks
+
+---
+
+## Backup
+
+Memory files are plain text — back them up like any other important file:
+
+```bash
+# Add to an existing private repo, or create one
+cd ~/.ai-memory
+git init
+git remote add origin git@github.com:<you>/ai-memory-private.git
+git add -A && git commit -m "backup"
+git push -u origin main
+```
+
+Run this periodically or hook it into your session-end workflow.
+
+---
+
 ## The Protocol
 
 ### Session Start
@@ -114,114 +195,6 @@ When you say "stop", "done", "pause", "wrap up", or "tomorrow":
 
 ---
 
-## File Templates
-
-All templates are in `templates/`. See them for copy-paste-ready starting points:
-
-| Template | Purpose |
-|----------|---------|
-| `templates/global.md` | Starting `~/.ai-memory/global.md` |
-| `templates/repo-state.md` | Starting `.ai-memory/state.md` for a repo |
-| `templates/memory-file.md` | Starting point for a topic memory file |
-| `templates/session-protocol-fragment.md` | The protocol block to inject into your AI tool |
-
----
-
-## What to Store
-
-**Good memory file candidates:**
-- Decisions that span multiple repos or sessions
-- Negotiation strategies, vendor context, key email threads
-- Architectural patterns your team has settled on
-- Solutions to recurring problems
-- Cross-repo conventions
-
-**Don't store:**
-- Things already in the codebase (code is the source of truth)
-- Single-session temporary state
-- Anything that duplicates what's in a project README or CLAUDE.md
-
----
-
-## What This Looks Like in Practice
-
-Most people start by storing project status and technical notes. That's useful. But the real leverage comes from recording the **human context** your AI would otherwise need to rediscover every session — team dynamics, communication preferences, thought processes, and relationship history.
-
-Here are concrete examples of entries that make sessions dramatically better:
-
-### Working style and communication preferences
-
-```markdown
-## Preferences
-- Draft all external comms to me first. Explicitly flag what to leave *out* — not just what to include.
-- When I ask for "a quick blurb" I mean 2-4 sentences, no bullet points.
-- Direct tone, no filler. Skip "Great question!" and similar.
-- I review important comms with my co-founder before sending — don't suggest sending without that step.
-```
-
-This kind of entry means the AI never writes a draft in the wrong voice, never sends without the right review step, and never pads responses with pleasantries you don't want.
-
-### Team relationships and dynamics
-
-```markdown
-## Team Context
-- Sarah (Design Lead): prefers async feedback via Figma comments, not Slack. Needs 24h heads-up
-  before scope changes. Territorial about timeline — frame new work as "additions," not "replacements."
-- Jake (QA): meticulous and thorough. Frame test coverage suggestions as additions, not critiques.
-- Jordan (co-founder, Product): peer, not a report. Keep informed when working on shared areas;
-  Jordan manages their own workload. Decisions made async in Notion — don't wait for live sync.
-- Engineering team: mostly PST. Decisions happen async; Slack for FYIs, Notion for decisions.
-```
-
-Without this, the AI treats every colleague the same way. With it, drafts land correctly the first time.
-
-### Vendor and stakeholder context
-
-```markdown
-## Vendors & External Relationships
-- Acme Consulting (contractor): rate dispute Aug–Jan, $14K claimed vs $8K expected. Call 1 done.
-  Target settlement: $5K max. Never escalate over email — frame in writing, negotiate specifics live.
-  Hold any leverage in reserve until needed.
-- Mariya (fractional CFO, Founders First): BOD-facing, data-before-opinions, no jargon.
-  Deliverables go to her SOB Monday. She synthesizes for the board.
-```
-
-This means the AI remembers the negotiation history, knows the stakes, and matches the right tone automatically — without you re-explaining the situation every session.
-
-### Decision frameworks and thought processes
-
-```markdown
-## Decision Frameworks
-- Pricing/packaging changes: always segment paid vs. free users before drawing conclusions.
-  Aggregate metrics mix revenue-generating and non-revenue cohorts and hide what's actually happening.
-- Build vs. buy: default to buy for non-core infra (auth, payments, email). Build only when
-  the vendor can't support our scale or creates lock-in risk.
-- When debugging: reproduce first, hypothesize second. Don't touch production before local repro.
-```
-
-These entries make the AI think about problems the way you do — not just execute tasks, but apply your actual judgment.
-
-### Cross-repo patterns and gotchas
-
-```markdown
-## Cross-Repo Patterns
-- NuGet restore always fails on first run in CI — it's a known flake. Retry once before investigating.
-- All services use Azure Managed Identity for SQL access. Never hardcode connection strings.
-- The monorepo `main` branch is protected. All changes go through PRs even for hotfixes.
-```
-
-This is the classic use case — but the examples above show it's only one layer of what's possible.
-
----
-
-### The compounding effect
-
-The value isn't any single entry. It's that over time, your AI accumulates enough context to feel like it actually knows your project, your team, and your working style. Sessions start at depth instead of from zero. The AI catches things it shouldn't say to the wrong person, applies your actual decision frameworks, and handles relationship context the way you would.
-
-**You're not just giving it a to-do list. You're giving it a working model of your world.**
-
----
-
 ## Journal Format
 
 The journal is a daily append-only log. Each entry follows this structure:
@@ -239,19 +212,22 @@ Multiple sessions per day just append more blocks to the same file.
 
 ---
 
-## Specializations
+## File Templates
 
-The core protocol is tool-agnostic. Specializations handle tool-specific wiring:
+All templates are in `templates/`. See them for copy-paste-ready starting points:
 
-- **How to tell the AI what to read** (CLAUDE.md, .cursorrules, system prompt injection)
-- **How to register session hooks** (for tools that support them)
-- **How to add custom commands** (e.g. `/init-memory`)
-
-See `specializations/<tool>/README.md` for your tool.
+| Template | Purpose |
+|----------|---------|
+| `templates/global.md` | Starting `~/.ai-memory/global.md` |
+| `templates/repo-state.md` | Starting `.ai-memory/state.md` for a repo |
+| `templates/memory-file.md` | Starting point for a topic memory file |
+| `templates/session-protocol-fragment.md` | The protocol block to inject into your AI tool |
 
 ---
 
-## Contributing a Specialization
+## Contributing
+
+### Adding a Specialization
 
 To add support for a new tool:
 1. Create `specializations/<tool-name>/README.md` following the pattern in `specializations/claude-code/README.md`

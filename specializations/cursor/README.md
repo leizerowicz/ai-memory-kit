@@ -1,41 +1,112 @@
-# Cursor Specialization
+# Cursor Integration — AI Memory Kit
 
-> Status: Stub. Contributions welcome.
+Full setup guide for Cursor users.
 
-## How Cursor Differs
+## Quick Setup
 
-Cursor uses `.cursorrules` at the repo root (or a `rules` block in `.cursor/config`) as persistent instructions that get injected into the AI context. There is no native hook system for session start/end.
-
-## Wiring the Protocol
-
-### Per-Repo
-
-Create `.cursorrules` at the repo root (or append to it if it exists):
-
-```
-cat ../../templates/session-protocol-fragment.md >> .cursorrules
+Run the main installer and choose Cursor when prompted:
+```bash
+bash setup.sh --tool cursor
 ```
 
-Update the memory directory paths in the fragment from `~/.ai-memory/` to `~/.cursor-memory/` (or whichever directory you choose).
+Or manually follow the steps below.
 
-### Global
+## How It Works
 
-Cursor does not currently have a global system prompt file equivalent to Claude Code's `~/.claude/CLAUDE.md`. Options:
-1. Add the global protocol to every repo's `.cursorrules` (repetitive but reliable)
-2. Use a Cursor Rule that references a shared file (if your Cursor version supports it)
+Cursor injects rule files into the AI context at session start. The memory kit hooks into this system to load your state files automatically.
 
-## Memory Directory
+### Memory Directory
 
-Since Cursor doesn't have a `~/.cursor/` convention, use `~/.ai-memory/` as your memory root so it's tool-neutral. Adjust all paths in the session protocol fragment accordingly.
+The Cursor specialization uses `~/.ai-memory/` as the memory root (tool-agnostic, not tied to Cursor's config location):
 
-## Limitations
+```
+~/.ai-memory/
+  global.md              # Always loaded — thin index of all state
+  state.md               # Admin/non-repo work
+  memory/
+    <topic>.md           # Loaded on demand
+    journal/
+      YYYY-MM-DD.md      # Daily session log
+```
 
-- No native hook support means session-end updates must be triggered manually ("done, update state files")
-- No custom slash commands — use natural language ("initialize memory for this repo")
+### Per-Repo Files
 
-## Contributing
+```
+<repo>/.cursor/
+  rules/
+    memory.mdc           # Repo-level memory rules (committed to git)
+```
 
-If you've built a working Cursor integration, please add:
-- The exact `.cursorrules` content that works
-- Any workarounds for the missing hook system
-- Instructions for the per-repo setup
+### Session Flow
+
+**Session start:** Cursor reads `.cursor/rules/memory.mdc` → AI loads `~/.ai-memory/global.md` + repo state
+
+**Session end (manual):** Say "done for today, update state files" — the AI updates the state files and appends a journal entry
+
+## Setup
+
+### Step 1: Memory directory
+
+```bash
+mkdir -p ~/.ai-memory/memory/journal
+```
+
+### Step 2: Global index
+
+```bash
+cp templates/global.md ~/.ai-memory/global.md
+# Edit with your preferences, projects, team context
+```
+
+### Step 3: Global Cursor rules
+
+Cursor supports global rules in `~/.cursor/rules/`. Create the memory rule:
+
+```bash
+mkdir -p ~/.cursor/rules
+cp specializations/cursor/global-rule.mdc ~/.cursor/rules/ai-memory.mdc
+```
+
+### Step 4: Initialize a repo
+
+In any repo you work in with Cursor, run:
+
+```bash
+bash setup.sh --tool cursor --repo .
+# Or manually:
+mkdir -p .cursor/rules
+cp specializations/cursor/repo-rule.mdc .cursor/rules/memory.mdc
+```
+
+Edit `.cursor/rules/memory.mdc` to reflect the repo name and what it's about.
+
+### Step 5: Fill in your global index
+
+Open `~/.ai-memory/global.md` and fill in:
+- Your preferences and working style
+- Active projects table
+- Team context (using the examples as a guide)
+
+## Session End Triggers
+
+Since Cursor has no native hooks, use these natural language triggers to end a session:
+
+- "done for today" — triggers state file updates + journal entry
+- "stop, update memory" — same
+- "save session state" — same
+
+The rule file instructs the AI to perform all updates when it hears these phrases.
+
+## What Gets Committed
+
+- `.cursor/rules/memory.mdc` — **commit this** (shared context for any AI tool that reads the repo)
+- `~/.ai-memory/` files — **never commit** (personal memory, lives outside the repo)
+
+## Limitations vs. Claude Code
+
+| Feature | Claude Code | Cursor |
+|---------|------------|--------|
+| Auto session-start | ✓ Hook fires automatically | ✓ Rule file injected automatically |
+| Auto session-end | ✓ Hook triggers on stop | ✗ Manual trigger required |
+| `/init-memory` command | ✓ | ✗ Use `setup.sh --tool cursor --repo .` |
+| Global memory path | `~/.claude/` | `~/.ai-memory/` |

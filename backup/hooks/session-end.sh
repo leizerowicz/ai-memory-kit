@@ -31,4 +31,14 @@ if git diff --cached --quiet; then
 fi
 
 git commit -m "auto: $(date '+%Y-%m-%d %H:%M')" --quiet
-git push --quiet 2>/dev/null || true  # Don't fail session if push fails
+
+# Push
+GIT_ERROR=$(git push origin "${BRANCH:-main}" --quiet 2>&1) && {
+    echo "$(date '+%Y-%m-%d %H:%M')" > "$HOME/.claude/.backup-last-push"
+    rm -f "$HOME/.claude/.backup-last-error"
+} || {
+    ERROR_MSG="$(date '+%Y-%m-%d %H:%M') — git push failed: $GIT_ERROR"
+    echo "$ERROR_MSG" > "$HOME/.claude/.backup-last-error"
+    echo "Warning: Backup push failed. Details: $HOME/.claude/.backup-last-error"
+    exit 1
+}

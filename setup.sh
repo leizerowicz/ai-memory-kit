@@ -16,6 +16,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOL=""
 DRY_RUN=false
+REPO_DIR=""
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 
@@ -26,13 +27,17 @@ Usage: bash setup.sh [OPTIONS]
 Options:
   --tool=TOOL     Specify tool without prompt (claude-code, cursor, generic)
   --tool TOOL     Same as above (space-separated form)
+  --repo=PATH     Install per-repo rule into PATH (Cursor only)
+  --repo PATH     Same as above (space-separated form)
+  --update        Update mode: overwrite hook scripts and commands (memory files untouched)
   --dry-run       Preview what would be installed without modifying files
   --help          Show this help message
 
 Examples:
   bash setup.sh
   bash setup.sh --tool claude-code
-  bash setup.sh --tool=cursor --dry-run
+  bash setup.sh --tool=cursor --repo .
+  bash setup.sh --tool claude-code --update --dry-run
 USAGE
 }
 
@@ -45,6 +50,13 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             TOOL="$2"; shift 2 ;;
+        --repo=*) REPO_DIR="$(cd "${1#--repo=}" 2>/dev/null && pwd || echo "")"; shift ;;
+        --repo)
+            if [ -z "${2:-}" ]; then
+                echo "Error: --repo requires a path"
+                exit 1
+            fi
+            REPO_DIR="$(cd "$2" 2>/dev/null && pwd || echo "")"; shift 2 ;;
         --dry-run) DRY_RUN=true; shift ;;
         --help) usage; exit 0 ;;
         *) shift ;;
@@ -278,7 +290,32 @@ PYEOF
         ;;
 
     cursor)
-        warn "Cursor setup is manual. See $SPEC_DIR/README.md for instructions."
+        # Global rules
+        run mkdir -p "$HOME/.cursor/rules"
+        GLOBAL_RULE="$HOME/.cursor/rules/ai-memory.mdc"
+        if [ ! -f "$GLOBAL_RULE" ] || [ "${UPDATE:-false}" = true ]; then
+            run cp "$SPEC_DIR/global-rule.mdc" "$GLOBAL_RULE"
+            log "Installed global Cursor rule: $GLOBAL_RULE"
+        else
+            info "Global Cursor rule already exists — skipped"
+        fi
+
+        # Per-repo rule (if --repo was passed)
+        if [ -n "${REPO_DIR:-}" ]; then
+            if [ -d "$REPO_DIR" ]; then
+                RULE_DIR="$REPO_DIR/.cursor/rules"
+                run mkdir -p "$RULE_DIR"
+                if [ ! -f "$RULE_DIR/memory.mdc" ] || [ "${UPDATE:-false}" = true ]; then
+                    run cp "$SPEC_DIR/repo-rule.mdc" "$RULE_DIR/memory.mdc"
+                    log "Installed repo rule: $RULE_DIR/memory.mdc"
+                    warn "Edit $RULE_DIR/memory.mdc to add repo name and initial status"
+                else
+                    info "Repo rule already exists — skipped"
+                fi
+            else
+                warn "--repo path not found or not a directory: $REPO_DIR"
+            fi
+        fi
         ;;
 
     generic)
@@ -300,8 +337,9 @@ if [ "$TOOL" = "claude-code" ]; then
     echo "  2. Open a repo and run /init-memory to set it up"
     echo "  3. Start a Claude Code session — it will load your state automatically"
 elif [ "$TOOL" = "cursor" ]; then
-    echo "  2. Follow the manual steps in specializations/cursor/README.md"
-    echo "  3. Add the session protocol fragment to your .cursorrules"
+    echo "  2. Open a repo and run: bash setup.sh --tool cursor --repo <path>"
+    echo "  3. Start a Cursor session — the global rule loads your state automatically"
+    echo "  4. See specializations/cursor/README.md for full documentation"
 else
     echo "  2. Add the session protocol to your tool's system prompt"
     echo "     See: specializations/generic/README.md"

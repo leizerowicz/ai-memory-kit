@@ -80,3 +80,9 @@ repo in your global index.
 ## Source
 
 https://github.com/leizerowicz/ai-memory-kit
+
+The one-line installer always pulls from the `main` branch. To install a specific version:
+```
+# To install a specific version:
+AIMK_VERSION=v1.0.0 bash <(curl -fsSL https://raw.githubusercontent.com/leizerowicz/ai-memory-kit/main/install.sh)
+```

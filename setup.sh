@@ -8,6 +8,8 @@
 #   bash setup.sh --tool claude-code # Non-interactive
 #   bash setup.sh --tool cursor
 #   bash setup.sh --tool generic
+#   bash setup.sh --dry-run          # Preview changes without modifying files
+#   bash setup.sh --help             # Show this help
 
 set -euo pipefail
 
@@ -17,12 +19,35 @@ DRY_RUN=false
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 
-for arg in "$@"; do
-    case $arg in
-        --tool=*) TOOL="${arg#*=}" ;;
-        --tool)   shift; TOOL="$1" ;;
-        --dry-run) DRY_RUN=true ;;
-        *) ;;
+usage() {
+    cat <<USAGE
+Usage: bash setup.sh [OPTIONS]
+
+Options:
+  --tool=TOOL     Specify tool without prompt (claude-code, cursor, generic)
+  --tool TOOL     Same as above (space-separated form)
+  --dry-run       Preview what would be installed without modifying files
+  --help          Show this help message
+
+Examples:
+  bash setup.sh
+  bash setup.sh --tool claude-code
+  bash setup.sh --tool=cursor --dry-run
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --tool=*) TOOL="${1#--tool=}"; shift ;;
+        --tool)
+            if [ -z "${2:-}" ]; then
+                echo "Error: --tool requires a value (claude-code, cursor, or generic)"
+                exit 1
+            fi
+            TOOL="$2"; shift 2 ;;
+        --dry-run) DRY_RUN=true; shift ;;
+        --help) usage; exit 0 ;;
+        *) shift ;;
     esac
 done
 
@@ -142,7 +167,18 @@ fi
 header "Global state file"
 
 if [ ! -f "$GLOBAL_STATE" ]; then
-    run cp "$SCRIPT_DIR/templates/global.md" "$GLOBAL_STATE"
+    if [ "$TOOL" = "claude-code" ]; then
+        if [ "$DRY_RUN" = false ]; then
+            sed \
+                -e 's|~/.ai-memory/|~/.claude/|g' \
+                -e 's|\.ai-memory/state\.md|.claude/state.md|g' \
+                "$SCRIPT_DIR/templates/global.md" > "$GLOBAL_STATE"
+        else
+            info "[dry-run] Would sed (path substitution) templates/global.md > $GLOBAL_STATE"
+        fi
+    else
+        run cp "$SCRIPT_DIR/templates/global.md" "$GLOBAL_STATE"
+    fi
     log "Created $GLOBAL_STATE"
     warn "Edit $GLOBAL_STATE to add your name, preferences, and projects"
 else
@@ -193,17 +229,48 @@ case "$TOOL" in
             info "/init-memory command already exists — skipped"
         fi
 
-        # settings.json — merge, don't overwrite
+        # settings.json — merge hook, don't overwrite
         SETTINGS="$HOME/.claude/settings.json"
+        HOOK_CMD="bash ~/.claude/hooks/check-global-state.sh"
+
         if [ ! -f "$SETTINGS" ]; then
             run cp "$SPEC_DIR/settings.json" "$SETTINGS"
             log "Created $SETTINGS with hook registration"
         else
             if ! grep -q "check-global-state" "$SETTINGS" 2>/dev/null; then
-                warn "settings.json already exists but doesn't have the hook."
-                warn "Manually add the SessionStart hook from:"
-                info "  $SPEC_DIR/settings.json"
-                info "  → into $SETTINGS"
+                # Merge hook into existing settings.json using Python
+                if [ "$DRY_RUN" = false ]; then
+                    # Write to temp file first (atomic write)
+                    TMP_SETTINGS="$(mktemp)"
+                    if python3 - "$SETTINGS" "$HOOK_CMD" "$TMP_SETTINGS" <<'PYEOF' 2>/dev/null; then
+import json, sys
+settings_path, hook_cmd, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    with open(settings_path) as f:
+        settings = json.load(f)
+except (json.JSONDecodeError, IOError):
+    sys.exit(1)
+hooks = settings.setdefault("hooks", {})
+session_start = hooks.setdefault("SessionStart", [])
+if not isinstance(session_start, list):
+    sys.exit(1)
+hook_entry = {"type": "command", "command": hook_cmd}
+if not any(h.get("command") == hook_cmd for h in session_start if isinstance(h, dict)):
+    session_start.append(hook_entry)
+with open(out_path, "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+PYEOF
+                        mv "$TMP_SETTINGS" "$SETTINGS"
+                        log "Merged SessionStart hook into existing $SETTINGS"
+                    else
+                        rm -f "$TMP_SETTINGS"
+                        warn "Could not auto-merge hook into $SETTINGS (malformed JSON or python3 unavailable)."
+                        warn "Manually add the SessionStart hook from: $SPEC_DIR/settings.json"
+                    fi
+                else
+                    info "[dry-run] Would merge hook into $SETTINGS"
+                fi
             else
                 info "Hook already registered in settings.json — skipped"
             fi

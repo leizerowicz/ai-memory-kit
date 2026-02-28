@@ -32,18 +32,26 @@ if [ -f "$REPO_STATE" ]; then
 fi
 
 # --- Scan all repos for broader staleness ---
+# Scan roots: colon-separated list of directories to search for repo state files.
+# Override by setting AI_MEMORY_SCAN_ROOTS in your environment (colon-separated).
+# Default: $HOME/repos:$HOME/code:$HOME/dev:$HOME/projects
+IFS=: read -ra SCAN_ROOT_ARRAY <<< "${AI_MEMORY_SCAN_ROOTS:-$HOME/repos:$HOME/code:$HOME/dev:$HOME/projects}"
+
 STALE_REPOS=()
 GLOBAL_DATE=$(get_date "$GLOBAL_STATE")
 
 if [ -n "$GLOBAL_DATE" ]; then
-    while IFS= read -r state_file; do
-        FILE_DATE=$(get_date "$state_file")
-        if [ -n "$FILE_DATE" ] && [[ "$FILE_DATE" > "$GLOBAL_DATE" ]]; then
-            rel="${state_file#$HOME/repos/}"
-            repo_name="${rel%/.claude/state.md}"
-            STALE_REPOS+=("$repo_name ($FILE_DATE)")
-        fi
-    done < <(find "$HOME/repos" -path '*/.claude/state.md' -not -path '*/node_modules/*' 2>/dev/null)
+    for root in "${SCAN_ROOT_ARRAY[@]}"; do
+        [ -d "$root" ] || continue
+        while IFS= read -r state_file; do
+            FILE_DATE=$(get_date "$state_file")
+            if [ -n "$FILE_DATE" ] && [[ "$FILE_DATE" > "$GLOBAL_DATE" ]]; then
+                rel="${state_file#$HOME/}"
+                repo_name="${rel%/.claude/state.md}"
+                STALE_REPOS+=("$repo_name ($FILE_DATE)")
+            fi
+        done < <(find "$root" -path '*/.claude/state.md' -not -path '*/node_modules/*' 2>/dev/null)
+    done
 
     if [ ${#STALE_REPOS[@]} -gt 0 ]; then
         echo ""

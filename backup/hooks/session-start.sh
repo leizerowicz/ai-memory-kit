@@ -3,6 +3,8 @@
 # Runs at session start. Pulls latest from backup repo, then syncs to ~/.claude/
 # Silently no-ops if backup isn't configured or git isn't available.
 
+set -euo pipefail
+
 MEMORY_DIR="$HOME/.claude"
 BACKUP_DIR_FILE="$MEMORY_DIR/.backup-dir"
 

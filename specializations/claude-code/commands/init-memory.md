@@ -1,5 +1,5 @@
 ---
-description: Initialize the AI Memory Kit for the current repo. Creates .claude/state.md, ensures correct .gitignore entries, appends session protocol to CLAUDE.md, and registers the repo in the global index. Safe to run multiple times (idempotent).
+description: Initialize the AI Memory Kit for the current repo. Creates .claude/team-state.md (tracked in git) and .claude/personal-state.md (gitignored), ensures correct .gitignore entries, appends session protocol to CLAUDE.md, and registers the repo in the global index. Safe to run multiple times (idempotent).
 ---
 
 # Initialize Memory System for Current Repo
@@ -12,26 +12,51 @@ Run these steps in order. Skip any step that's already done (this command is ide
 - Check if it's a git repo (`ls .git` or `git rev-parse --show-toplevel`)
 - Read `~/.claude/global-state.md` to check if this repo is already registered
 
-## Step 2: Create `.claude/state.md` (if missing)
+## Step 2: Create state files (if missing)
 
-If `.claude/state.md` does not exist, create it:
+This repo uses TWO state files with different visibility:
+
+**`.claude/team-state.md`** — committed to git (shared team context)
+
+If `.claude/team-state.md` does not exist, create it:
 
 ```markdown
-# [Repo Name] — Project State
+# [Repo Name] — Team State
 
 Last updated: [today's date]
 
-## Current Branch
-[run `git branch --show-current`]
+## Architecture & Key Decisions
+<!-- Decisions the whole team should know. Include the "why" not just the "what". -->
 
-## Current Status
-[Ask the user what this repo is about, or infer from CLAUDE.md / README]
+## Conventions
+<!-- Patterns, naming, tooling choices that apply across the team. -->
 
-## What's Next
-[Leave blank for now]
+## Current Sprint Focus
+<!-- Team-level "what are we working on right now" -->
 
-## Gotchas
-[Leave blank for now]
+## Shared Gotchas
+<!-- Hard-won lessons. What surprised us. What NOT to do. -->
+```
+
+**`.claude/personal-state.md`** — gitignored (your personal context)
+
+If `.claude/personal-state.md` does not exist, create it:
+
+```markdown
+# [Repo Name] — Personal State
+
+Last updated: [today's date]
+
+(This file is gitignored. It's yours — context you wouldn't want teammates reading as objective fact.)
+
+## My Current Focus
+<!-- Your personal next steps -->
+
+## Personal Context
+<!-- Working notes, opinions, relationship dynamics for this repo -->
+
+## What I'm Watching
+<!-- Open questions, things to follow up on -->
 ```
 
 ## Step 3: Fix `.gitignore`
@@ -39,12 +64,12 @@ Last updated: [today's date]
 Check `.gitignore`. Ensure these lines are present:
 
 ```
-.claude/state.md
+.claude/personal-state.md
 .claude/settings.local.json
 .claude/memory.db
 ```
 
-**Do NOT add `.claude/` as a whole directory.** That breaks skills and commands. Only add the specific files above.
+**Do NOT add `.claude/` as a whole directory.** That breaks skills and commands. Only add the specific files above. Note that `team-state.md` is intentionally NOT gitignored — it is meant to be committed and shared with your team.
 
 If any of those lines are missing, append them. If `.claude/` (as a directory) is already in `.gitignore`, remove it and replace with the three file-level entries above.
 
@@ -58,13 +83,15 @@ Read the repo's `CLAUDE.md`. If it does NOT already contain "Session State Proto
 
 **At session start (REQUIRED):**
 1. Read `~/.claude/global-state.md` — preferences, active projects, memory file manifest
-2. Read `.claude/state.md` in this repo — branch, progress, next steps, gotchas
-3. Check the Memory Files table in global-state.md — load any `~/.claude/memory/` files relevant to this session's topic
+2. Read `.claude/team-state.md` in this repo — shared team context: architecture decisions, conventions, sprint focus, gotchas
+3. Read `.claude/personal-state.md` in this repo — your personal context: current focus, working notes, opinions
+4. Check the Memory Files table in global-state.md — load any `~/.claude/memory/` files relevant to this session's topic
 
 **At session end (when user says stop/done/pause/tomorrow):**
-1. Update `.claude/state.md` with: what's done, what's next, blockers, gotchas
-2. Update the project's row in `~/.claude/global-state.md` Active Projects table
-3. If significant new cross-repo context was created (patterns, strategies, decisions), create or update a file in `~/.claude/memory/` and add it to the Memory Files manifest in global-state.md
+1. Update `.claude/team-state.md` with shared context: architecture decisions, conventions, gotchas the team should know
+2. Update `.claude/personal-state.md` with personal context: your next steps, working notes, opinions
+3. Update the project's row in `~/.claude/global-state.md` Active Projects table
+4. If significant new cross-repo context was created (patterns, strategies, decisions), create or update a file in `~/.claude/memory/` and add it to the Memory Files manifest in global-state.md
 
 **Do NOT use ruvector/claude-flow memory CLI for state storage.** Use plain markdown files only.
 ```
@@ -79,16 +106,18 @@ Read `~/.claude/global-state.md`. If the current repo is NOT in the Active Proje
 | [Project Name] | [full repo path] | New — just initialized | TBD |
 ```
 
-Add the repo's state file to the State Files table if missing:
+Add the repo's state files to the State Files table if missing:
 
 ```
-| `[full path]/.claude/state.md` | What this repo covers |
+| `[full path]/.claude/team-state.md` | Shared team context for this repo |
+| `[full path]/.claude/personal-state.md` | Personal context for this repo (gitignored) |
 ```
 
 ## Step 6: Report
 
 Tell the user:
-- `.claude/state.md` — created or already existed
+- `.claude/team-state.md` — created or already existed (committed to git, shared with team)
+- `.claude/personal-state.md` — created or already existed (gitignored, personal only)
 - `.gitignore` — updated or already correct
 - `CLAUDE.md` — protocol appended or already present
 - `global-state.md` — repo registered or already listed

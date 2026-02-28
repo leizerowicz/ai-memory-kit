@@ -20,7 +20,7 @@
 ### Session Start (REQUIRED)
 
 1. Read `~/.claude/global-state.md`
-2. Read `.claude/state.md` in the current repo (or `~/.claude/state.md` if in home dir)
+2. Read `.claude/team-state.md` (shared team context) and `.claude/personal-state.md` (your personal context) in the current repo, if they exist. Fall back to `.claude/state.md` for older repos not yet migrated. (Or `~/.claude/state.md` if in home dir.)
 3. Check the Memory Files table in global-state.md — load any `~/.claude/memory/` files whose keywords match this session's topic
 4. Summarize current state, then ask: **"What's the goal for this session? What does success look like?"**
 
@@ -30,7 +30,7 @@ If work drifts from the stated goal, flag it: *"Quick check — we set out to [g
 
 ### Session End (on "stop" / "done" / "pause" / "tomorrow")
 
-1. Update the repo's `.claude/state.md`
+1. Update `.claude/team-state.md` with shared changes and `.claude/personal-state.md` with personal changes. (For older repos not yet migrated, update `.claude/state.md` as before.)
 2. Update the Active Projects row in `~/.claude/global-state.md`
 3. Create/update topic files in `~/.claude/memory/` for significant new cross-repo context
 4. Append to `~/.claude/memory/journal/YYYY-MM-DD.md`:

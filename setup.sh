@@ -200,7 +200,10 @@ else
     info "Already exists: $GLOBAL_STATE — skipped"
 fi
 
-# ── Step 3: Admin state file ──────────────────────────────────────────────────
+# ── Step 3: Admin state file (team/personal split) ───────────────────────────
+# For team repos, use templates/team-state.md (committed, shared context).
+# For personal notes, use templates/personal-state.md (gitignored, private).
+# The admin state file at ADMIN_STATE is the non-repo catch-all (email, admin, misc).
 
 header "Admin state file"
 
@@ -262,6 +265,25 @@ case "$TOOL" in
             log "Installed doctor script: $DOCTOR_DEST"
         else
             info "doctor.sh already exists: $DOCTOR_DEST — skipped"
+        fi
+
+        # journal-summary.sh script
+        JOURNAL_DEST="$HOME/.claude/memory-kit/journal-summary.sh"
+        if [ ! -f "$JOURNAL_DEST" ] || [ "$UPDATE" = true ]; then
+            run cp "$SCRIPT_DIR/journal-summary.sh" "$JOURNAL_DEST"
+            run chmod +x "$JOURNAL_DEST"
+            log "Installed journal summary script: $JOURNAL_DEST"
+        else
+            info "journal-summary.sh already exists: $JOURNAL_DEST — skipped"
+        fi
+
+        # /journal command
+        JOURNAL_CMD_DEST="$HOME/.claude/commands/journal.md"
+        if [ ! -f "$JOURNAL_CMD_DEST" ] || [ "$UPDATE" = true ]; then
+            run cp "$SPEC_DIR/commands/journal.md" "$JOURNAL_CMD_DEST"
+            log "Installed command: /journal"
+        else
+            info "/journal command already exists — skipped"
         fi
 
         # settings.json — merge hook, don't overwrite
@@ -359,6 +381,7 @@ echo "  1. Edit $GLOBAL_STATE with your preferences and projects"
 if [ "$TOOL" = "claude-code" ]; then
     echo "  2. Open a repo and run /init-memory to set it up"
     echo "  3. Start a Claude Code session — it will load your state automatically"
+    echo "  4. Run /journal for a weekly digest of your AI session logs"
 elif [ "$TOOL" = "cursor" ]; then
     echo "  2. Open a repo and run: bash setup.sh --tool cursor --repo <path>"
     echo "  3. Start a Cursor session — the global rule loads your state automatically"
